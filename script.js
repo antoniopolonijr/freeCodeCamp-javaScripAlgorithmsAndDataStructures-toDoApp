@@ -12,7 +12,9 @@ const titleInput = document.getElementById("title-input");
 const dateInput = document.getElementById("date-input");
 const descriptionInput = document.getElementById("description-input");
 
-const taskData = []; // store all the tasks along with their associated data
+// If you add, update, or remove a task, it should reflect in the UI. However, that's not happening now because you have yet to retrieve the tasks. To do this, you need to modify your initial taskData to be an empty array.
+const taskData = JSON.parse(localStorage.getItem("data")) || []; // store all the tasks along with their associated data
+
 let currentTask = {}; // track the state when editing and discarding tasks
 
 // The function to add the input values to taskData
@@ -35,6 +37,11 @@ const addOrUpdateTask = () => {
   } else {
     taskData[dataArrIndex] = taskObj; // To make the editing functional
   }
+
+  // Now you should save the task items to local storage when the user adds, updates, or removes a task.
+  // This would persist data once the user adds or updates tasks.
+  localStorage.setItem("data", JSON.stringify(taskData));
+
   updateTaskContainer(); // responsible for adding the tasks to the DOM.
 
   // If you attempt to add another task now, you'll notice that the input fields retain the values you entered for the previous task. To resolve this, you need to clear the input fields after adding a task.
@@ -69,6 +76,9 @@ const deleteTask = (buttonEl) => {
   // splice() is an array method that modifies arrays by removing, replacing, or adding elements at a specified index, while also returning the removed elements. It can take up to three arguments: the first one is the mandatory index at which to start, the second is the number of items to remove, and the third is an optional replacement element.
   buttonEl.parentElement.remove(); // to remove the task from the DOM
   taskData.splice(dataArrIndex, 1); // to remove the task from the taskData array
+
+  // You also want a deleted task to be removed from local storage. For this, you don't need the removeItem() or clear() methods. Since you already use splice() to remove the deleted task from taskData, all you need to do now is save taskData to local storage again.
+  localStorage.setItem("data", JSON.stringify(taskData));
 };
 
 // function will handle task editing
@@ -94,12 +104,22 @@ const editTask = (buttonEl) => {
 
 // reset function to clear the input fields
 const reset = () => {
+  //If you try to add a new task, edit that task, and then click on the Add New Task button, you will notice a bug. The form button will display the incorrect text of "Update Task" instead of "Add Task".
+  addOrUpdateTaskBtn.innerText = "Add Task"; // To fix this, assign the string "Add Task"
+
   titleInput.value = ""; // clear the input field
   dateInput.value = ""; // clear the input field
   descriptionInput.value = ""; // clear the input field
   taskForm.classList.toggle("hidden"); //  hide the form modal for the user to see the added task
   currentTask = {}; // That's because at this point, currentTask will be filled with the task the user might have added.
 };
+
+// You've retrieved the task item(s) now, but they still don't reflect in the UI when the page loads. However, they appear when you add a new task.
+// You can check if there's a task inside taskData using the length of the array. Because 0 is a falsy value all you need for the condition is the array length.
+if (taskData.length) {
+  // Check if there's a task inside
+  updateTaskContainer();
+}
 
 // opening and closing the modal dialog box on the web page
 openTaskFormBtn.addEventListener("click", () => {
