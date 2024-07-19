@@ -31,9 +31,10 @@ const addOrUpdateTask = () => {
   // Now that you have obtained the values from the input fields and generated an id, you want to add them to your taskData array to keep track of each task. However, you should only do this if the task is new. If the task already exists, you will set it up for editing. This is why you have the dataArrIndex variable, which provides the index of each task.
   if (dataArrIndex === -1) {
     // dataArrIndex variable, which provides the index of each task.
-    taskData.unshift(taskObj); // add the taskObj object to the beginning of the taskData array.
-  } // unshift() is an array method that is used to add one or more elements to the beginning of an array.
-
+    taskData.unshift(taskObj); // add the taskObj object to the beginning of the taskData array. // unshift() is an array method that is used to add one or more elements to the beginning of an array.
+  } else {
+    taskData[dataArrIndex] = taskObj; // To make the editing functional
+  }
   updateTaskContainer(); // responsible for adding the tasks to the DOM.
 
   // If you attempt to add another task now, you'll notice that the input fields retain the values you entered for the previous task. To resolve this, you need to clear the input fields after adding a task.
@@ -49,13 +50,46 @@ const updateTaskContainer = () => {
   // display the task on the page by looping through it.
   taskData.forEach(({ id, title, date, description }) => {
     tasksContainer.innerHTML += `<div class="task" id="${id}">
-  <p><strong>Title:</strong> ${title}</p>
-  <p><strong>Date:</strong> ${date}</p>
-  <p><strong>Description:</strong> ${description}</p>
-  <button type="button" class="btn">Edit</button>
-    <button type="button" class="btn">Delete</button>
-  </div>`; // template strings (${}) to set the parameter you destructured from the task data. / To allow for task management, you need to include both a delete and an edit button for each task.
+      <p><strong>Title:</strong> ${title}</p>
+      <p><strong>Date:</strong> ${date}</p>
+      <p><strong>Description:</strong> ${description}</p>
+      <button onclick="editTask(this)" type="button" class="btn">Edit</button>
+      <button onclick="deleteTask(this)" type="button" class="btn">Delete</button> 
+      </div>`; // template strings (${}) to set the parameter you destructured from the task data. / To allow for task management, you need to include both a delete and an edit button for each task. / To enable editing and deleting for each task, add an onclick attribute to both buttons. / "this" is a keyword that refers to the current context. In this case, "this" points to the element that triggers the event – the buttons.
   });
+};
+
+// function will handle task deletion
+const deleteTask = (buttonEl) => {
+  const dataArrIndex = taskData.findIndex(
+    (item) => item.id === buttonEl.parentElement.id
+  ); // You need to find the index of the task you want to delete first.
+
+  // You need to remove the task from the DOM using remove() and from the taskData array using splice().
+  // splice() is an array method that modifies arrays by removing, replacing, or adding elements at a specified index, while also returning the removed elements. It can take up to three arguments: the first one is the mandatory index at which to start, the second is the number of items to remove, and the third is an optional replacement element.
+  buttonEl.parentElement.remove(); // to remove the task from the DOM
+  taskData.splice(dataArrIndex, 1); // to remove the task from the taskData array
+};
+
+// function will handle task editing
+const editTask = (buttonEl) => {
+  const dataArrIndex = taskData.findIndex(
+    (item) => item.id === buttonEl.parentElement.id
+  ); // You need to find the index of the task you want to delete first.
+
+  currentTask = taskData[dataArrIndex]; // retrieve the task to be edited from the taskData array using the dataArrIndex. Then, assign it to the currentTask object to keep track of it.
+
+  // The task to be edited is now in the currentTask object. Stage it for editing inside the input fields by setting the value of...
+  titleInput.value = currentTask.title;
+  dateInput.value = currentTask.date;
+  descriptionInput.value = currentTask.description;
+
+  addOrUpdateTaskBtn.innerText = `Update Task`; // Set the innerText of the addOrUpdateTaskBtn button to Update Task
+  taskForm.classList.toggle("hidden"); // display the form modal with the values of the input fields
+
+  // At this point, editing a task won't reflect when you submit the task. To make the editing functional, go back to the if statement inside the addOrUpdateTask function. Create an else block and set taskData[dataArrIndex] to taskObj.
+
+  //If the user attempts to edit a task but decides not to make any changes before closing the form, there is no need to display the modal with the Cancel and Discard buttons. Inside the closeTaskFormBtn event listener, check if the user made changes while trying to edit a task
 };
 
 // reset function to clear the input fields
@@ -77,8 +111,13 @@ closeTaskFormBtn.addEventListener("click", () => {
   const formInputsContainValues =
     titleInput.value || dateInput.value || descriptionInput.value; // variable to check if there is a value in the titleInput field or the dateInput field or the descriptionInput field.
 
-  if (formInputsContainValues) {
-    // If formInputsContainValues is true, indicating that there are changes
+  const formInputValuesUpdated =
+    titleInput.value !== currentTask.title ||
+    dateInput.value !== currentTask.date ||
+    descriptionInput.value !== currentTask.description; // Check if the user made changes while trying to edit a task
+
+  if (formInputsContainValues && formInputValuesUpdated) {
+    // If formInputsContainValues is true, indicating that there are changes / (formInputValuesUpdated as the second mandatory) This way, the Cancel and Discard buttons in the modal won't be displayed to the user if they haven't made any changes to the input fields while attempting to edit a task.
     confirmCloseDialog.showModal(); // showModal() method display a modal dialog box on a web page
   } else {
     // Otherwise, if there are no changes
